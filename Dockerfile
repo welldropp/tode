@@ -57,9 +57,6 @@ RUN pip install -r requirements.txt
 # Layer 2: application code
 COPY . .
 
-# Persisted state — annotations + frame cache + downloaded videos
-VOLUME ["/app/output", "/root/Documents/labeled_img"]
-
 CMD ["python", "main.py"]
 
 # ── web server stage ───────────────────────────────────────────────────────────
@@ -81,8 +78,6 @@ COPY requirements.txt requirements-server.txt ./
 RUN pip install -r requirements.txt -r requirements-server.txt
 
 COPY . .
-
-VOLUME ["/app/output"]
 
 EXPOSE 8000
 
