@@ -1,8 +1,3 @@
-"""
-Right-hand panel with two tabs:
-  AUTO  — YOLO confidence slider, run buttons
-  MANUAL— class selector, box list, delete button
-"""
 import tkinter as tk
 from collections.abc import Callable
 from tkinter import filedialog, ttk
