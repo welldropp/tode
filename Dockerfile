@@ -33,18 +33,26 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH="/app/src"
 
 # System dependencies:
-#   libgl1, libglib2.0-0       — OpenCV runtime
-#   libxcb1, libxext6, libsm6  — Tk + cv2 imshow on X11
-#   tk, python3-tk             — Tkinter UI
+#   libgl1, libegl1, libglib2.0-0     — OpenCV + Qt (QtGui/OpenGL) runtime
+#   libxcb*, libxkbcommon0, libdbus-1 — PyQt6 xcb platform plugin on X11
 RUN apt-get update && apt-get install --no-install-recommends -y \
         libgl1 \
+        libegl1 \
         libglib2.0-0 \
+        libxkbcommon0 \
+        libdbus-1-3 \
         libxcb1 \
+        libxcb-cursor0 \
+        libxcb-icccm4 \
+        libxcb-image0 \
+        libxcb-keysyms1 \
+        libxcb-randr0 \
+        libxcb-render-util0 \
+        libxcb-shape0 \
+        libxcb-xinerama0 \
         libxext6 \
         libsm6 \
         libxrender1 \
-        tk \
-        python3-tk \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 

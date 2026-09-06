@@ -33,3 +33,9 @@ Thumbs.db
 
 # Local debug binaries (downloaded for reproducing CI failures)
 gitleaks
+
+# PyInstaller / packaging build artifacts
+build/
+dist/
+packaging/Output/
+*.manifest

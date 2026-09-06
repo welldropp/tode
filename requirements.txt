@@ -1,11 +1,11 @@
 # Desktop + detection runtime dependencies.
 
-# Core imaging / UI
+# Core imaging + PyQt6 desktop UI
 opencv-python>=4.8.0,<5.0.0
 Pillow>=10.0.0
 numpy>=1.24.0,<3.0.0
 requests>=2.28.0
-tkinterdnd2>=0.3.0
+PyQt6>=6.6.0
 
 # Detection engine: RT-DETR (Apache-2.0) via HuggingFace transformers,
 # with the `supervision` library for post-processing / NMS.

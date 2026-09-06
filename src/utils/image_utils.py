@@ -85,14 +85,6 @@ def resize_frame(frame, width: int, height: int) -> np.ndarray:
     return canvas
 
 
-def bgr_to_photoimage(bgr_frame, width: int, height: int):
-    """Convert BGR frame → Tkinter PhotoImage."""
-    from PIL import Image, ImageTk
-    resized = resize_frame(bgr_frame, width, height)
-    rgb     = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
-    return ImageTk.PhotoImage(Image.fromarray(rgb))
-
-
 def hex_to_bgr(hex_color: str) -> tuple[int, int, int]:
     hex_color = hex_color.lstrip("#")
     r, g, b = (int(hex_color[i:i+2], 16) for i in (0, 2, 4))
