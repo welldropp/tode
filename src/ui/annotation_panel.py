@@ -1,6 +1,6 @@
 """
 Right-hand panel with two tabs:
-  AUTO  — YOLO confidence slider, run buttons
+  AUTO  — RT-DETR confidence slider, run buttons
   MANUAL— class selector, box list, delete button
 """
 import tkinter as tk
@@ -8,15 +8,15 @@ from collections.abc import Callable
 from tkinter import filedialog, ttk
 
 from models.annotation_model import BoundingBox
-from utils.config import ACCENT, BG_DARK, BG_PANEL, TEXT_LIGHT, YOLO_DEFAULT_MODEL, YOLO_MODELS
+from utils.config import ACCENT, BG_DARK, BG_PANEL, RTDETR_DEFAULT_MODEL, RTDETR_MODELS, TEXT_LIGHT
 
 
 class AnnotationPanel(tk.Frame):
     def __init__(
         self,
         master,
-        on_yolo_click:       Callable,
-        on_yolo_all_click:   Callable,
+        on_detect_click:     Callable,
+        on_detect_all_click: Callable,
         on_save_click:       Callable,
         on_clear_click:      Callable,
         on_delete_box:       Callable = None,   # callable(box_index)
@@ -27,8 +27,8 @@ class AnnotationPanel(tk.Frame):
         super().__init__(master, bg=BG_PANEL, width=280)
         self.pack_propagate(False)
 
-        self._on_yolo        = on_yolo_click
-        self._on_yolo_all    = on_yolo_all_click
+        self._on_detect      = on_detect_click
+        self._on_detect_all  = on_detect_all_click
         self._on_save        = on_save_click
         self._on_clear       = on_clear_click
         self._on_delete_box  = on_delete_box
@@ -37,7 +37,7 @@ class AnnotationPanel(tk.Frame):
         self._on_box_select  = on_box_select
         self._syncing_selection = False
 
-        # Current class names from YOLO model
+        # Current class names from the RT-DETR model
         self._class_names: dict[int, str] = {}
 
         # Manual annotation state
@@ -97,17 +97,17 @@ class AnnotationPanel(tk.Frame):
     def _build_auto_tab(self, parent):
         # ── Model selector ────────────────────────────────────────────────────
         tk.Label(
-            parent, text="Model  (.pt = Ultralytics · .onnx = AGPL-free)",
+            parent, text="RT-DETR model  (auto-downloaded from HuggingFace)",
             bg=BG_PANEL, fg=TEXT_LIGHT, font=("Consolas", 8),
         ).pack(pady=(10, 2), padx=10, anchor=tk.W)
 
         model_row = tk.Frame(parent, bg=BG_PANEL)
         model_row.pack(fill=tk.X, padx=10, pady=(0, 6))
 
-        self.model_var = tk.StringVar(value=YOLO_DEFAULT_MODEL)
+        self.model_var = tk.StringVar(value=RTDETR_DEFAULT_MODEL)
         self._model_combo = ttk.Combobox(
             model_row, textvariable=self.model_var,
-            values=YOLO_MODELS, font=("Consolas", 9), state="readonly", width=14,
+            values=RTDETR_MODELS, font=("Consolas", 9), state="readonly", width=18,
         )
         self._model_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=3)
         self._model_combo.bind("<<ComboboxSelected>>",
@@ -160,15 +160,15 @@ class AnnotationPanel(tk.Frame):
 
         # Run buttons
         tk.Button(
-            parent, text="⚡  YOLO This Frame",
-            command=self._on_yolo,
+            parent, text="⚡  Detect This Frame",
+            command=self._on_detect,
             bg=ACCENT, fg="white", relief=tk.FLAT,
             padx=8, pady=6, font=("Consolas", 9, "bold"), cursor="hand2",
         ).pack(fill=tk.X, padx=10, pady=(12, 3))
 
         tk.Button(
-            parent, text="🔁  YOLO All Frames",
-            command=self._on_yolo_all,
+            parent, text="🔁  Detect All Frames",
+            command=self._on_detect_all,
             bg="#5a4fbf", fg="white", relief=tk.FLAT,
             padx=8, pady=6, font=("Consolas", 9, "bold"), cursor="hand2",
         ).pack(fill=tk.X, padx=10, pady=3)
@@ -179,7 +179,7 @@ class AnnotationPanel(tk.Frame):
             bg=BG_PANEL, fg=TEXT_LIGHT, font=("Consolas", 9),
         ).pack(pady=(10, 2), padx=10, anchor=tk.W)
 
-        # Combobox (populated when YOLO loads)
+        # Combobox (populated when the RT-DETR model loads)
         self.class_combo = ttk.Combobox(
             parent, textvariable=self.selected_class_var,
             font=("Consolas", 9), state="readonly",
@@ -331,7 +331,7 @@ class AnnotationPanel(tk.Frame):
     def update_boxes(self, boxes: list[BoundingBox], class_names: dict[int, str]):
         self._class_names = class_names
 
-        # Update combobox values from YOLO class names
+        # Update combobox values from the RT-DETR class names
         names = sorted(set(class_names.values())) if class_names else ["object"]
         self.class_combo["values"] = names
         if names and self.selected_class_var.get() not in names:
@@ -340,7 +340,7 @@ class AnnotationPanel(tk.Frame):
         # Update listbox
         self.listbox.delete(0, tk.END)
         for i, box in enumerate(boxes):
-            src  = "YOLO" if box.confidence < 1.0 else " MAN"
+            src  = "AUTO" if box.confidence < 1.0 else " MAN"
             conf = f"{box.confidence:.2f}" if box.confidence < 1.0 else "  — "
             self.listbox.insert(
                 tk.END,

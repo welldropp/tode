@@ -5,12 +5,12 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 from core.annotation_manager import AnnotationManager
+from core.auto_annotator import AutoAnnotator
 from core.exporter import DatasetExporter
 from core.frame_extractor import FrameExtractor
 from core.image_frame_extractor import ImageFrameExtractor
 from core.image_loader import ImageLoader
 from core.video_loader import VideoLoader
-from core.yolo_annotator import YOLOAnnotator
 from models.annotation_model import BoundingBox
 from storage.frame_storage import FrameStorage
 from storage.label_storage import LabelStorage
@@ -81,8 +81,8 @@ class MainWindow(tk.Frame):
 
         self.ann_panel = AnnotationPanel(
             content,
-            on_yolo_click     = self._run_yolo,
-            on_yolo_all_click = self._run_yolo_all,
+            on_detect_click     = self._run_detect,
+            on_detect_all_click = self._run_detect_all,
             on_save_click     = self._save,
             on_clear_click    = self._clear_frame,
             on_delete_box     = self._delete_box,
@@ -129,8 +129,8 @@ class MainWindow(tk.Frame):
         btn("🎬  Video",      self._open_video_direct)
         btn("🖼  Image",      self._open_image_direct)
         btn("💾  Save",       self._save,               color="#2d7a4e")
-        btn("⚡  YOLO Frame", self._run_yolo)
-        btn("🔁  YOLO All",   self._run_yolo_all,       color="#5a4fbf")
+        btn("⚡  Detect Frame", self._run_detect)
+        btn("🔁  Detect All",   self._run_detect_all,     color="#5a4fbf")
         btn("📤  Export",    self._export_dataset,     color="#1f7a8c")
         btn("📋  Logs",       self._show_logs,           color="#3a4a6a")
 
@@ -201,9 +201,9 @@ class MainWindow(tk.Frame):
             "<Control-o>":    lambda _e: self._open_source(),
             "<Control-O>":    lambda _e: self._open_source(),
             "<Delete>":       lambda _e: self._clear_frame(),
-            # YOLO
-            "y":              lambda _e: self._run_yolo(),
-            "Y":              lambda _e: self._run_yolo(),
+            # RT-DETR auto-detect
+            "y":              lambda _e: self._run_detect(),
+            "Y":              lambda _e: self._run_detect(),
         }
         for key, fn in mappings.items():
             root.bind(key, fn)
@@ -379,10 +379,10 @@ class MainWindow(tk.Frame):
             loader    = VideoLoader(path)
             loader.open()
             extractor = FrameExtractor(loader, step=step, save_frames=True)
-            yolo      = YOLOAnnotator()
+            detector  = AutoAnnotator()
             vname = os.path.splitext(os.path.basename(path))[0]
             mgr   = AnnotationManager(
-                loader, extractor, yolo,
+                loader, extractor, detector,
                 FrameStorage(vname),
                 LabelStorage(vname),
             )
@@ -438,7 +438,7 @@ class MainWindow(tk.Frame):
                 )
 
             extractor = ImageFrameExtractor(loader, copy_files=True)
-            yolo      = YOLOAnnotator()
+            detector  = AutoAnnotator()
 
             src_name = (
                 os.path.basename(path.rstrip("/\\")) or "images"
@@ -450,7 +450,7 @@ class MainWindow(tk.Frame):
             )
 
             mgr = AnnotationManager(
-                loader, extractor, yolo,
+                loader, extractor, detector,
                 FrameStorage(src_name),
                 LabelStorage(src_name),
             )
@@ -494,9 +494,9 @@ class MainWindow(tk.Frame):
         polygons = ann.polygons if ann else []
         self.player.set_overlay_boxes(boxes)
         self.player.set_overlay_polygons(polygons)
-        self.ann_panel.update_boxes(boxes, self.manager.yolo.class_names)
+        self.ann_panel.update_boxes(boxes, self.manager.detector.class_names)
         # refresh seg panel polygon list
-        class_names = list(self.manager.yolo.class_names.values())
+        class_names = list(self.manager.detector.class_names.values())
         self.seg_panel.update_polygons(polygons, class_names)
         self._sync_color_map()
 
@@ -506,10 +506,10 @@ class MainWindow(tk.Frame):
         if mode == "polygon":
             self.ann_panel.pack_forget()
             self.seg_panel.pack(side=tk.RIGHT, fill=tk.Y, padx=(0, 6), pady=6)
-            # seed class names from YOLO model if available
+            # seed class names from the RT-DETR model if available
             if self.manager:
                 self.seg_panel.set_class_names(
-                    list(self.manager.yolo.class_names.values())
+                    list(self.manager.detector.class_names.values())
                 )
         else:
             self.seg_panel.pack_forget()
@@ -523,7 +523,7 @@ class MainWindow(tk.Frame):
         idx      = self.player.current_frame_index
         # Use class from seg_panel (semantic) if polygon mode active
         cls_name = self.seg_panel.get_selected_class()
-        class_names = self.manager.yolo.class_names
+        class_names = self.manager.detector.class_names
         cls_id   = next(
             (k for k, v in class_names.items()
              if v.lower() == cls_name.lower()), 0
@@ -566,7 +566,7 @@ class MainWindow(tk.Frame):
         ann = self.manager.get_annotation(idx)
         self.player.set_overlay_polygons(ann.polygons)
         self.seg_panel.update_polygons(
-            ann.polygons, list(self.manager.yolo.class_names.values())
+            ann.polygons, list(self.manager.detector.class_names.values())
         )
         self._set_status(f"Deleted polygon [{poly_index}] from frame {idx}.")
 
@@ -595,7 +595,7 @@ class MainWindow(tk.Frame):
             return
 
         cls_name    = self.ann_panel.get_selected_class()
-        class_names = self.manager.yolo.class_names
+        class_names = self.manager.detector.class_names
         cls_id      = next(
             (k for k, v in class_names.items()
              if v.lower() == cls_name.lower()), 0
@@ -616,7 +616,7 @@ class MainWindow(tk.Frame):
 
         ann = self.manager.get_annotation(idx)
         self.player.set_overlay_boxes(ann.boxes)
-        self.ann_panel.update_boxes(ann.boxes, self.manager.yolo.class_names)
+        self.ann_panel.update_boxes(ann.boxes, self.manager.detector.class_names)
         src_label = (
             "image" if self._source_type in ("image", "image_folder")
             else "frame"
@@ -642,7 +642,7 @@ class MainWindow(tk.Frame):
         box.width    = x2_n - x1_n
         box.height   = y2_n - y1_n
         ann.is_annotated = bool(ann.boxes)
-        self.ann_panel.update_boxes(ann.boxes, self.manager.yolo.class_names)
+        self.ann_panel.update_boxes(ann.boxes, self.manager.detector.class_names)
         self._set_status(
             f"Edited box [{box_index}] — '{box.class_name}' "
             f"({box.width:.2f}×{box.height:.2f})"
@@ -664,25 +664,25 @@ class MainWindow(tk.Frame):
         self.manager.remove_box(idx, box_index)
         ann = self.manager.get_annotation(idx)
         self.player.set_overlay_boxes(ann.boxes)
-        self.ann_panel.update_boxes(ann.boxes, self.manager.yolo.class_names)
+        self.ann_panel.update_boxes(ann.boxes, self.manager.detector.class_names)
         self._set_status(f"Deleted box [{box_index}] from index {idx}.")
 
     # ── confidence change ─────────────────────────────────────────────────────
     def _on_conf_change(self, val: float):
         if self.manager:
-            self.manager.yolo.confidence = val
+            self.manager.detector.confidence = val
             log.debug(f"Confidence updated → {val:.2f}")
 
     # ── model change ──────────────────────────────────────────────────────────
     def _on_model_change(self, model: str):
-        yolo = self.manager.yolo if self.manager else None
-        target = yolo or __import__("core.yolo_annotator", fromlist=["YOLOAnnotator"]).YOLOAnnotator()
+        detector = self.manager.detector if self.manager else None
+        target = detector or AutoAnnotator()
         self._set_status(f"Loading model '{model}'…")
         log.info(f"Model change requested → {model}")
 
         def _work():
             if self.manager:
-                self.manager.yolo.reload(model)
+                self.manager.detector.reload(model)
             else:
                 target.reload(model)
 
@@ -697,16 +697,16 @@ class MainWindow(tk.Frame):
 
         self._run_in_thread(_work, _done, _err)
 
-    # ── YOLO single frame ─────────────────────────────────────────────────────
-    def _run_yolo(self):
+    # ── RT-DETR single frame ──────────────────────────────────────────────────
+    def _run_detect(self):
         if not self._require_manager() or self._busy:
             return
         idx        = self.player.current_frame_index
         conf       = self.ann_panel.get_confidence_threshold()
         cls_filter = self.ann_panel.get_class_filter()
-        self.manager.yolo.confidence = conf
-        self._set_status(f"Running YOLO on index {idx}…")
-        log.info(f"YOLO single — idx={idx}, conf={conf}, filter={cls_filter}")
+        self.manager.detector.confidence = conf
+        self._set_status(f"Running RT-DETR on index {idx}…")
+        log.info(f"RT-DETR single — idx={idx}, conf={conf}, filter={cls_filter}")
 
         def _work():
             ann = self.manager.auto_annotate_frame(idx)
@@ -721,28 +721,28 @@ class MainWindow(tk.Frame):
         def _done(ann):
             self.player.set_overlay_boxes(ann.boxes)
             self.ann_panel.update_boxes(
-                ann.boxes, self.manager.yolo.class_names
+                ann.boxes, self.manager.detector.class_names
             )
             self._set_status(
-                f"YOLO: {len(ann.boxes)} object(s) at index {idx}."
+                f"RT-DETR: {len(ann.boxes)} object(s) at index {idx}."
             )
 
         self._run_in_thread(_work, _done)
 
-    # ── YOLO all frames ───────────────────────────────────────────────────────
-    def _run_yolo_all(self):
+    # ── RT-DETR all frames ────────────────────────────────────────────────────
+    def _run_detect_all(self):
         if not self._require_manager() or self._busy:
             return
         total      = self.manager.total_count
         conf       = self.ann_panel.get_confidence_threshold()
         cls_filter = self.ann_panel.get_class_filter()
-        self.manager.yolo.confidence = conf
-        self._set_status("Running YOLO on all…")
-        log.info(f"YOLO all — conf={conf}, filter={cls_filter}")
+        self.manager.detector.confidence = conf
+        self._set_status("Running RT-DETR on all…")
+        log.info(f"RT-DETR all — conf={conf}, filter={cls_filter}")
 
         def _progress(done, tot):
             self.after(0, lambda d=done, t=tot: self._set_status(
-                f"YOLO annotating… {d}/{t}"
+                f"RT-DETR annotating… {d}/{t}"
             ))
 
         def _work():
@@ -758,7 +758,7 @@ class MainWindow(tk.Frame):
 
         def _done(count):
             self._set_status(
-                f"YOLO complete — {count}/{total} annotated."
+                f"RT-DETR complete — {count}/{total} annotated."
             )
 
         self._run_in_thread(_work, _done)
@@ -808,7 +808,7 @@ class MainWindow(tk.Frame):
 
         exporter = DatasetExporter(
             annotations = self.manager._annotations,
-            class_names = self.manager.yolo.class_names,
+            class_names = self.manager.detector.class_names,
             output_dir  = out_dir,
         )
 

@@ -13,7 +13,6 @@ from server.services.annotation_service import (
     save_frame_annotations,
 )
 from server.services.project_service import ProjectService
-from utils.config import YOLO_MODEL_PATH
 
 router = APIRouter(prefix="/api/projects/{project_id}/frames")
 _svc   = ProjectService()
@@ -61,7 +60,7 @@ def save_annotations(project_id: str, frame_index: int, body: FrameAnnotationsIn
 
 @router.post("/{frame_index}/auto-annotate")
 def auto_annotate(project_id: str, frame_index: int, conf: float = 0.25):
-    """Run YOLO auto-annotation on a single frame and return bounding boxes."""
+    """Run RT-DETR auto-annotation on a single frame and return bounding boxes."""
     if _svc.get(project_id) is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
@@ -69,18 +68,15 @@ def auto_annotate(project_id: str, frame_index: int, conf: float = 0.25):
     if not path:
         raise HTTPException(status_code=404, detail="Frame image not found")
 
-    if not os.path.isfile(YOLO_MODEL_PATH):
-        return {"boxes": [], "error": "No model file found"}
-
     try:
-        from core.yolo_annotator import YOLOAnnotator
+        from core.auto_annotator import AutoAnnotator
         from utils.image_utils import safe_imread
 
         frame = safe_imread(path)
         if frame is None:
             return {"boxes": [], "error": "Could not read frame image"}
 
-        boxes = YOLOAnnotator(confidence=conf).annotate_frame(frame)
+        boxes = AutoAnnotator(confidence=conf).annotate_frame(frame)
         return {
             "boxes": [
                 {

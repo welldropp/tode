@@ -3,12 +3,10 @@ core/detectors/
 ────────────────
 Detection backend implementations.
 
-  UltralyticsDetector  — wraps ultralytics.YOLO  (AGPL-3.0)
-  ONNXDetector         — pure onnxruntime         (MIT, AGPL-free)
+  RTDetrDetector — RT-DETR via HuggingFace transformers + supervision (Apache-2.0)
 
-Backend imports are deferred so that the ONNX path never pulls in
-torch/ultralytics. Import directly from the submodules:
+Heavy deps (torch / transformers / supervision) are imported lazily inside the
+backend, so importing this package stays cheap. Import directly:
 
-    from core.detectors.onnx_detector import ONNXDetector
-    from core.detectors.ultralytics_detector import UltralyticsDetector
+    from core.detectors.rtdetr_detector import RTDetrDetector
 """

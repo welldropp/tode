@@ -5,9 +5,9 @@ from collections.abc import Callable
 
 import cv2
 
+from core.auto_annotator import AutoAnnotator
 from core.frame_extractor import FrameExtractor
 from core.video_loader import VideoLoader
-from core.yolo_annotator import YOLOAnnotator
 from models.annotation_model import (
     BoundingBox,
     FrameAnnotation,
@@ -27,13 +27,13 @@ class AnnotationManager:
         self,
         video_loader:    VideoLoader,
         frame_extractor: FrameExtractor,
-        yolo_annotator:  YOLOAnnotator,
+        detector:        AutoAnnotator,
         frame_storage:   FrameStorage,
         label_storage:   LabelStorage,
     ):
         self.loader    = video_loader
         self.extractor = frame_extractor
-        self.yolo      = yolo_annotator
+        self.detector  = detector
         self.f_store   = frame_storage
         self.l_store   = label_storage
         self._annotations: dict[int, FrameAnnotation] = {}
@@ -147,7 +147,7 @@ class AnnotationManager:
                 "skipping YOLO inference"
             )
         else:
-            boxes = self.yolo.annotate_frame(frame)
+            boxes = self.detector.annotate_frame(frame)
             for box in boxes:
                 ann.add_box(box)
         log.info(
@@ -220,7 +220,7 @@ class AnnotationManager:
                     frames.append(frame)
 
             # Run batched YOLO; detector implementations may optimise this
-            boxes_list = self.yolo.annotate_frames(frames)
+            boxes_list = self.detector.annotate_frames(frames)
 
             # Apply detections back into annotations
             for rel_i, idx in enumerate(batch_idx):

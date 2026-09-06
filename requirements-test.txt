@@ -1,9 +1,8 @@
-# Headless test dependencies — no GUI, no torch, no ultralytics.
-# Mirrors the runtime ONNX path so the 73 functional tests can exercise
-# real preprocessing/postprocessing code without large downloads.
+# Headless test dependencies — no GUI, no torch/transformers.
+# The functional test-suite exercises storage, exporters, importers, loaders,
+# and the detector facade (via a stub backend), so heavy ML deps aren't needed.
 opencv-python-headless>=4.8.0,<5.0.0
 Pillow>=10.0.0
 numpy>=1.24.0,<3.0.0
 requests>=2.28.0
-onnxruntime>=1.17.0
 pytest>=7.0.0

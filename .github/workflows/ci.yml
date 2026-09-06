@@ -124,8 +124,8 @@ jobs:
       - name: Audit main requirements
         run: pip-audit -r requirements.txt
 
-      - name: Audit ONNX requirements
-        run: pip-audit -r requirements-onnx.txt
+      - name: Audit server requirements
+        run: pip-audit -r requirements-server.txt
 
       - name: Audit test requirements
         run: pip-audit -r requirements-test.txt
@@ -200,9 +200,6 @@ jobs:
           - variant: cpu
             dockerfile: docker/Dockerfile-cpu
             tag: tode:cpu
-          - variant: onnx
-            dockerfile: docker/Dockerfile-onnx
-            tag: tode:onnx
     steps:
       - uses: actions/checkout@v4
 

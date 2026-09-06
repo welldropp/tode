@@ -1,12 +1,11 @@
 """
 core/base_detector.py
 ─────────────────────
-Detector abstraction — every backend (Ultralytics, ONNX, future) implements
-this interface so the rest of the app never imports a specific backend.
+Detector abstraction — every backend implements this interface so the rest of
+the app never imports a specific backend.
 
-Breaking the interface free of ultralytics means:
-  - .onnx weights load via onnxruntime (MIT) with zero AGPL surface
-  - future backends (OpenVINO, TFLite, CoreML) drop in without UI changes
+The active backend is RT-DETR (transformers + supervision). Keeping this ABC
+means future backends (OpenVINO, TFLite, CoreML, …) drop in without UI changes.
 """
 from abc import ABC, abstractmethod
 
