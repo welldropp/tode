@@ -1,6 +1,6 @@
 # tode
 
-A fast, open-source annotation tool for video frames and images — bounding boxes, polygon segmentation, and image classification — powered by YOLO auto-annotation and a built-in web server for multi-user workflows.
+A fast, open-source annotation tool for video frames and images — bounding boxes, polygon segmentation, and image classification — powered by RT-DETR auto-annotation and a built-in web server for multi-user workflows. Ships as a PyQt6 desktop app with a one-click installer.
 
 ---
 
@@ -29,8 +29,8 @@ A fast, open-source annotation tool for video frames and images — bounding box
 
 ## Features
 
-**Desktop app (Tkinter)**
-- Auto-annotate with any YOLO26 / YOLO11 / YOLOv8 model — one frame or all at once
+**Desktop app (PyQt6)**
+- Auto-annotate with RT-DETR (HuggingFace transformers + supervision) — one frame or all at once
 - Three annotation types: **bounding box**, **polygon segmentation**, **image classification**
 - Click-and-drag box drawing with full resize / move handles
 - Polygon draw mode — click to place vertices, double-click to close, Escape to cancel
@@ -80,6 +80,10 @@ python main.py
 pip install -r requirements-server.txt
 python run_server.py               # → http://localhost:8000
 ```
+
+> **Prefer a one-click install?** tode also ships as a WEKA-style installer
+> (`tode-setup.exe` on Windows, a tarball on Linux) that bundles Python and all
+> dependencies — no manual setup. See [`packaging/README.md`](packaging/README.md).
 
 ---
 
@@ -136,7 +140,7 @@ Select the annotation type from the mode bar above the canvas.
 | `W` | Switch to **Draw Box** mode |
 | `V` / `Esc` | Switch to **View** mode / cancel polygon |
 | `Space` | Toggle play / pause |
-| `Y` | Run YOLO on the current frame |
+| `Y` | Run RT-DETR on the current frame |
 | `Ctrl+S` | Save annotations |
 | `Ctrl+E` | Export dataset |
 | `Ctrl+O` | Open source dialog |
@@ -159,19 +163,21 @@ The navigation bar has five buttons:
 
 ---
 
-### YOLO Models
+### RT-DETR Models
 
-The **Annotation Panel → Auto (YOLO)** tab has a model dropdown.
+The control panel has an **RT-DETR model** dropdown (HuggingFace ids).
 
-| Model | Size | Speed | Accuracy |
+| Model | Backbone | Speed | Accuracy |
 |---|---|---|---|
-| `yolo26x` | XLarge | Slow | Best |
-| `yolo26l` | Large | Medium | High |
-| `yolo26m` | Medium | Fast | Good |
-| `yolo26s` | Small | Faster | OK |
-| `yolo26n` | Nano | Fastest | Basic |
+| `PekingU/rtdetr_r18vd` | ResNet-18 | Fastest | Good |
+| `PekingU/rtdetr_r34vd` | ResNet-34 | Fast | Better |
+| `PekingU/rtdetr_r50vd` | ResNet-50 | Medium | High (default) |
+| `PekingU/rtdetr_r101vd` | ResNet-101 | Slow | Best |
+| `PekingU/rtdetr_v2_r18vd` / `_r50vd` | RT-DETRv2 | — | improved |
 
-Models are **auto-downloaded** on first use. To use a local `.pt` or `.onnx` file, click the `📂` button next to the dropdown.
+Weights are **auto-downloaded from the HuggingFace Hub** on first use and cached
+— no local weight files to manage. Set a different default with the
+`TODE_RTDETR_MODEL` environment variable.
 
 ---
 
@@ -189,10 +195,9 @@ Click **📤 Export** and choose a format and output folder.
 
 Only annotated frames are exported. Frame files are renumbered sequentially (`img_1`, `img_2`, …) so images and labels always match 1-to-1.
 
-**Train immediately after export (YOLO format):**
-```bash
-yolo train data=export_dir/data.yaml model=yolo26x.pt epochs=100
-```
+The YOLO/COCO export uses the standard dataset layout, so the result feeds
+straight into any detection trainer (RT-DETR fine-tuning via `transformers`,
+or any framework that reads YOLO `data.yaml` / COCO `annotations.json`).
 
 ---
 
@@ -300,11 +305,11 @@ tode/
 │   │   ├── frame_extractor.py      # sequential JPEG frame extraction
 │   │   ├── image_loader.py         # single image / folder loader
 │   │   ├── image_frame_extractor.py
-│   │   ├── yolo_annotator.py       # YOLO inference wrapper (thread-safe)
+│   │   ├── auto_annotator.py       # RT-DETR detector facade (thread-safe)
 │   │   ├── exporter.py             # multi-format dataset export
 │   │   ├── base_detector.py
 │   │   ├── analytics/              # stats, report generator
-│   │   ├── detectors/              # ONNX + Ultralytics detector backends
+│   │   ├── detectors/              # RT-DETR (transformers + supervision) backend
 │   │   ├── exporters/              # YOLO / COCO / Pascal VOC / CSV / JSON
 │   │   ├── importers/              # YOLO / COCO / CSV / JSON importers
 │   │   └── pipeline/               # QueueManager, BatchProcessor, Scheduler
@@ -325,16 +330,10 @@ tode/
 │   │   ├── session_storage.py
 │   │   └── formats/                # YOLO / COCO / CSV / Pascal VOC / JSON
 │   │
-│   └── ui/
-│       ├── main_window.py          # root frame, toolbar, event wiring
-│       ├── video_player.py         # canvas, navigation, play/pause, polygon draw
-│       ├── annotation_panel.py     # right panel (YOLO, box list)
-│       ├── annotation_type_selector.py
-│       ├── segmentation_panel.py
-│       ├── classification_panel.py
-│       ├── source_dialog.py        # open-source dialog with step selector
-│       ├── export_dialog.py
-│       └── log_viewer.py
+│   └── ui/                         # PyQt6 desktop UI
+│       ├── qt_main_window.py       # main window, toolbar, panel, event wiring
+│       ├── qt_canvas.py            # annotation canvas (boxes + polygons)
+│       └── qt_workers.py           # QThread load / detect workers
 │
 ├── server/                         # FastAPI web server (standalone)
 │   ├── app.py
@@ -344,8 +343,8 @@ tode/
 │   ├── services/                   # project, annotation, export services
 │   └── static/                     # index.html, app.js, style.css
 │
-├── tests/                          # pytest — 135 tests
-├── weights/                        # local .pt / .onnx model files (gitignored)
+├── packaging/                      # PyInstaller spec + Inno Setup wizard + CI
+├── tests/                          # pytest
 └── output/                         # generated files (gitignored)
 ```
 
@@ -400,7 +399,12 @@ docker compose up          # GPU used automatically
 
 Licensed under **GNU AGPL-3.0** — see [`LICENSE`](LICENSE).
 
-**Why AGPL?** Ultralytics YOLO is AGPL-3.0 (viral copyleft). Any project that links against `ultralytics` and is distributed (including over a network) must also be AGPL-3.0. For closed-source or commercial use, obtain the [Ultralytics Enterprise Licence](https://www.ultralytics.com/license) or replace the detector with a permissively-licensed alternative.
+**Why AGPL?** The detection stack is now permissively licensed — RT-DETR /
+`transformers` are Apache-2.0 and `supervision` is MIT (no Ultralytics/AGPL
+dependency). The remaining copyleft driver is the **PyQt6** desktop GUI, which
+is **GPL-3.0**; AGPL-3.0 is compatible with it and keeps tode fully open source.
+For a closed-source desktop distribution you would need a commercial PyQt
+licence (or swap PyQt6 for LGPL PySide6).
 
 | Action | Allowed? |
 |---|---|
@@ -408,7 +412,7 @@ Licensed under **GNU AGPL-3.0** — see [`LICENSE`](LICENSE).
 | Modify source code | ✅ |
 | Share modifications | ✅ — must include AGPL-3.0 source |
 | Run as a public web service | ✅ — must publish modifications under AGPL-3.0 |
-| Sell a closed-source fork or make it open source | ❌ — needs Ultralytics Enterprise Licence |
+| Distribute a closed-source fork | ❌ — AGPL-3.0 (and PyQt6 GPL) require source |
 | Train on your own data and keep the weights | ✅ — your data, your weights |
 
 See [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) for the full dependency licence table.

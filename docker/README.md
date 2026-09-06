@@ -1,32 +1,30 @@
 # Docker images
 
-Three image variants are provided; pick the one that matches your runtime.
+Two image variants are provided; pick the one that matches your runtime.
 
-| Tag         | Base                                       | Size (approx) | Backends         | Use case                                |
-|-------------|--------------------------------------------|---------------|------------------|-----------------------------------------|
-| `tode:cpu`  | `python:3.12-slim`                         | ~600 MB       | ONNX (CPU)       | CI, headless batch, dataset export      |
-| `tode:gpu`  | `pytorch/pytorch:2.4.0-cuda12.4-cudnn9`    | ~7 GB         | Ultralytics + ONNX (GPU) | Full GUI build with NVIDIA acceleration |
-| `tode:onnx` | `python:3.12-slim`                         | ~500 MB       | ONNX (CPU)       | AGPL-free deploys (no torch, no ultralytics) |
+| Tag        | Base                                       | Size (approx) | Detection      | Use case                                |
+|------------|--------------------------------------------|---------------|----------------|-----------------------------------------|
+| `tode:cpu` | `python:3.12-slim` + CPU torch             | ~2–3 GB       | RT-DETR (CPU)  | CI, headless batch, dataset export      |
+| `tode:gpu` | `pytorch/pytorch:2.4.0-cuda12.4-cudnn9`    | ~7 GB         | RT-DETR (CUDA) | GPU-accelerated batch / GUI build       |
 
-The repository root also contains a `Dockerfile` that builds the default
-GUI-capable CPU image used by `docker-compose.yml`. The variants in this
-folder are alternatives for specific environments.
+The repository root also contains a `Dockerfile` — its default stage builds the
+GUI-capable image (`docker-compose.yml`) and its `web` stage builds the FastAPI
+server (`docker-compose.server.yml`). RT-DETR weights download from the
+HuggingFace Hub on first use; they are not baked into any image.
 
 ## Build
 
 All commands are run from the repository root.
 
 ```bash
-docker build -f docker/Dockerfile-cpu  -t tode:cpu  .
-docker build -f docker/Dockerfile-gpu  -t tode:gpu  .
-docker build -f docker/Dockerfile-onnx -t tode:onnx .
+docker build -f docker/Dockerfile-cpu -t tode:cpu .
+docker build -f docker/Dockerfile-gpu -t tode:gpu .
 ```
 
 ## License notes
 
-- The `tode:gpu` and root `Dockerfile` images include the `ultralytics`
-  package (AGPL-3.0). Distributing or hosting a service built on those
-  images requires releasing your source code under AGPL-3.0.
-- The `tode:onnx` image deliberately omits `ultralytics` and `torch` so
-  that the resulting image is AGPL-free.
-- See `THIRD_PARTY_LICENSES.md` at the repo root for the full breakdown.
+- The detection stack (RT-DETR / `transformers` Apache-2.0, `supervision` MIT,
+  torch BSD) carries **no AGPL dependency**.
+- These headless images do not include PyQt6, so they are free of its GPL-3.0
+  copyleft; the desktop GUI (root `Dockerfile`, and the packaged installer) does
+  include PyQt6. See `THIRD_PARTY_LICENSES.md` for the full breakdown.
