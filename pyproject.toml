@@ -1,0 +1,21 @@
+# Project metadata + tool configuration. Build system stays disabled — tode is
+# distributed as source / docker image, not as a wheel.
+
+[tool.bandit]
+# Scan src/ only — tests and examples are excluded because assert usage,
+# temporary paths, and similar low-severity patterns are expected there.
+targets     = ["src"]
+exclude_dirs = ["tests", "examples"]
+# No skips: all medium/high rules are enforced.
+# Low-severity subprocess calls in ui/log_viewer.py carry individual
+# # nosec annotations with justification comments.
+
+[tool.pytest.ini_options]
+minversion  = "7.0"
+testpaths   = ["tests"]
+pythonpath  = ["src"]
+addopts     = [
+    "--strict-markers",
+    "--tb=short",
+    "--disable-warnings",
+]

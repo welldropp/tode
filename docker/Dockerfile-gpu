@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1.6
+#
+# tode — NVIDIA GPU image (CUDA + PyTorch + Ultralytics)
+# ──────────────────────────────────────────────────────
+# Full GUI-capable build with GPU-accelerated inference via Ultralytics.
+# Requires the NVIDIA Container Toolkit on the host.
+#
+# Build:
+#   docker build -f docker/Dockerfile-gpu -t tode:gpu .
+#
+# Run (headless, GPU):
+#   docker run --gpus all --rm -v $(pwd)/output:/app/output tode:gpu \
+#       python -c "from core import YOLOAnnotator"
+#
+# Run (with X11 GUI):
+#   xhost +local:docker
+#   docker run --gpus all --rm -it \
+#       -e DISPLAY=$DISPLAY \
+#       -v /tmp/.X11-unix:/tmp/.X11-unix \
+#       -v $(pwd)/output:/app/output \
+#       tode:gpu
+
+FROM pytorch/pytorch:2.4.0-cuda12.4-cudnn9-runtime AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    OPENCV_FFMPEG_CAPTURE_OPTIONS="threads;1" \
+    PYTHONPATH="/app/src"
+
+# OpenCV + Tk + X11 client libs (Tk for GUI; libgl1 for cv2.imshow).
+RUN apt-get update && apt-get install --no-install-recommends -y \
+        libgl1 \
+        libglib2.0-0 \
+        libxcb1 \
+        libxext6 \
+        libsm6 \
+        libxrender1 \
+        tk \
+        python3-tk \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
+
+COPY . .
+
+VOLUME ["/app/output", "/root/Documents/labeled_img"]
+
+CMD ["python", "main.py"]

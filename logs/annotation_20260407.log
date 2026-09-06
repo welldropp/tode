@@ -1,9 +1,0 @@
-2026-04-07 12:12:35 | INFO     | VideoAnnotation              | ======================================================================
-2026-04-07 12:12:35 | INFO     | VideoAnnotation              | Video Annotation Tool — Session started
-2026-04-07 12:12:35 | INFO     | VideoAnnotation              | Log file: D:\Pycharm\Video_Annotaion\logs\annotation_20260407.log
-2026-04-07 12:12:35 | INFO     | VideoAnnotation              | ======================================================================
-2026-04-07 12:12:41 | INFO     | VideoAnnotation.ui.MainWindow | MainWindow initialised
-2026-04-07 12:13:54 | INFO     | VideoAnnotation.ui.SourceDialog | User browsed — type=video, path=C:/Users/Sri Mathialagan/Downloads/YTDown.com_YouTube_Top-12-Moments-Dogs-vs-Delivery-Drivers_Media_VtNPgPZu19s_002_720p.mp4
-2026-04-07 12:15:47 | INFO     | VideoAnnotation.ui.SourceDialog | User browsed — type=image_folder, path=D:/dog_cnn/train
-2026-04-07 12:16:01 | INFO     | VideoAnnotation.ui.SourceDialog | User browsed — type=image_folder, path=D:/dog_cnn/train/images
-2026-04-07 12:32:45 | INFO     | VideoAnnotation.ui.MainWindow | Application closing — releasing resources

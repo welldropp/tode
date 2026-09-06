@@ -1,9 +1,0 @@
-2026-04-03 17:25:34 | INFO     | VideoAnnotation              | ======================================================================
-2026-04-03 17:25:34 | INFO     | VideoAnnotation              | Video Annotation Tool — Session started
-2026-04-03 17:25:34 | INFO     | VideoAnnotation              | Log file: D:\Pycharm\Video_Annotaion\logs\annotation_20260403.log
-2026-04-03 17:25:34 | INFO     | VideoAnnotation              | ======================================================================
-2026-04-03 17:25:41 | INFO     | VideoAnnotation.ui.MainWindow | MainWindow initialised
-2026-04-03 17:26:57 | INFO     | VideoAnnotation.ui.MainWindow | Log viewer opened
-2026-04-03 17:28:16 | INFO     | VideoAnnotation.ui.SourceDialog | User browsed — type=image_folder, path=D:/dog_cnn/train/images
-2026-04-03 17:28:28 | INFO     | VideoAnnotation.ui.SourceDialog | User browsed — type=image_folder, path=D:/dog_cnn/train/images
-2026-04-03 17:30:08 | INFO     | VideoAnnotation.ui.MainWindow | Application closing — releasing resources

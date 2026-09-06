@@ -1,0 +1,121 @@
+tode — Future Ideas & Roadmap
+══════════════════════════════════════════════════════════════════════════════
+
+Inspiration: Ultralytics HUB (platform.ultralytics.com)
+────────────────────────────────────────────────────────
+We explored the Ultralytics HUB platform and identified features worth
+bringing into tode. The full HUB is a cloud SaaS (web app, database, object
+storage, auth, billing) — rebuilding that is a separate product ("tode-cloud").
+The ideas below are scoped to what fits the existing desktop app first,
+then what would require a new web product.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TIER 1 — Low effort, high value (fits current tkinter desktop app)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Model Browser Tab
+   - New "Models" tab inside AnnotationPanel (or a floating window)
+   - Lists the full YOLO26 family (n / s / m / l / x) with:
+       Size (MB), mAP50-95, Parameters, Speed (ms)
+   - Data stored locally in a JSON file (models_catalogue.json)
+   - One-click "Use this model" sets it as the active detector
+   - Inspired by: HUB left-panel model list with metrics charts
+
+2. Export to Ultralytics HUB
+   - Single "Upload to HUB" button in ExportDialog
+   - Uses the official Ultralytics Python SDK to push the YOLO-format
+     export directly to the user's HUB account
+   - User provides API key in Settings dialog (stored in .env, not in code)
+   - Inspired by: HUB "New Dataset" → "Upload from device"
+
+3. Confidence & IoU presets per model
+   - Store recommended confidence/IoU per model name in models_catalogue.json
+   - Auto-apply when user switches model in the dropdown
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TIER 2 — Medium effort (still desktop, adds new structure)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4. Project System (multi-dataset management)
+   - Inspired by: HUB "My Projects" sidebar with Annotate / Train / Deploy
+   - output/ folder becomes output/projects/{project-name}/
+   - Project picker dialog on startup (create / open / recent)
+   - Each project keeps its own frames/, labels/, and export/ folders
+   - Recent projects list stored in a local config file
+
+5. Dataset Gallery View
+   - Inspired by: HUB dataset thumbnail grid
+   - New "Gallery" window showing a grid of annotated frame thumbnails
+   - Click a thumbnail to jump directly to that frame in the player
+   - Filter by: annotated only, unannotated only, specific class
+
+6. Annotation Statistics Panel
+   - Inspired by: HUB metrics charts (precision, recall, mAP curves)
+   - Summary view: total frames, annotated frames, boxes per class
+   - Bar chart of class distribution (using matplotlib embedded in tkinter)
+   - Exportable as PNG for reports
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TIER 3 — High effort (new web product: "tode-cloud")
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7. tode-cloud — Browser-based version
+   - Stack: FastAPI backend + React/Next.js frontend
+   - Same core logic (core/, models/, storage/) reused as a Python library
+   - Users access tode in the browser — no install required
+   - Replaces tkinter UI layer only; backend logic stays identical
+
+8. Multi-user / Team collaboration
+   - Inspired by: HUB user accounts, shared datasets, team projects
+   - Auth (OAuth / email-password), user roles (annotator / reviewer / admin)
+   - Multiple annotators can work on different frames of the same video
+   - Review workflow: annotator submits → reviewer approves/rejects
+
+9. Cloud Training Integration
+   - Inspired by: HUB "Train" section
+   - After export, trigger a training job on a cloud GPU (Vast.ai / RunPod / GCP)
+   - Monitor training progress (loss curves, mAP) inside tode
+   - Download the trained .pt and auto-add to weights/ as todev2.pt etc.
+
+10. Dataset Versioning
+    - Git-like snapshots of labels at export time
+    - Roll back to a previous annotation state
+    - Diff view: what changed between version 1 and version 2
+
+11. Deployment / Inference API
+    - Inspired by: HUB "Deploy" section
+    - Wrap any .onnx model in a FastAPI endpoint with one click
+    - Generate a curl / Python snippet for the running endpoint
+    - Docker Compose file auto-generated for self-hosted inference
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUICK WINS (small polish, any sprint)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Dark/light theme toggle (currently hardcoded dark)
+- Keyboard shortcuts: space=next frame, a=prev, d=draw mode, s=save
+- Undo / redo for box edits (Ctrl+Z / Ctrl+Y)
+- Box opacity slider for overlapping detections
+- Auto-save after each frame (optional setting)
+- Frame skip step selector (currently fixed at 1)
+- Zoom in/out on canvas (scroll wheel)
+- Copy boxes from previous frame to current frame (useful for static scenes)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- All Tier 1 items can be implemented without touching existing code paths
+- The project system (Tier 2 #4) is the highest-leverage structural change —
+  implement it before adding any cloud features so the folder layout is stable
+- Keep the ONNX / AGPL split clean: any new inference path must go through
+  BaseDetector so the licence boundary is maintained
+- tode-cloud should be a separate repo that imports core/ as a library,
+  not a branch of this desktop repo
+
+Last updated: 2026-05-18

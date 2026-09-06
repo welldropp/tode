@@ -1,0 +1,24 @@
+target-version = "py311"
+line-length    = 100
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (unused imports, undefined names)
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long — handled by formatter, not enforced here
+    "B008",  # function call in default argument — common in tkinter callbacks
+    "UP007", # use X | Y for union — keep 3.9 compat syntax
+]
+
+[lint.per-file-ignores]
+"src/ui/*" = ["E402"]   # imports not at top — tkinter style patterns
+"main.py"  = ["E402"]   # cv2 env var must be set before import
+
+[lint.isort]
+known-first-party = ["core", "models", "storage", "ui", "utils"]

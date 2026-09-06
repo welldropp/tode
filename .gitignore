@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Tooling caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
 # Virtual environments
 .venv/
 venv/
@@ -10,8 +15,13 @@ env/
 
 # Generated runtime artifacts
 output/
-logs/*.log
-logs/*.log.*
+logs/
+
+# YOLO / PyTorch weight files — download on first run, never commit binaries
+weights/*.pt
+weights/*.pth
+weights/*.onnx
+weights/*.engine
 
 # IDE
 .idea/
@@ -20,3 +30,12 @@ logs/*.log.*
 # OS
 .DS_Store
 Thumbs.db
+
+# Local debug binaries (downloaded for reproducing CI failures)
+gitleaks
+
+# PyInstaller / packaging build artifacts
+build/
+dist/
+packaging/Output/
+*.manifest

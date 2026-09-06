@@ -1,6 +1,0 @@
-2026-04-13 23:32:49 | INFO     | VideoAnnotation              | ======================================================================
-2026-04-13 23:32:49 | INFO     | VideoAnnotation              | Video Annotation Tool — Session started
-2026-04-13 23:32:49 | INFO     | VideoAnnotation              | Log file: D:\Pycharm\Video_Annotaion\logs\annotation_20260413.log
-2026-04-13 23:32:49 | INFO     | VideoAnnotation              | ======================================================================
-2026-04-13 23:32:59 | INFO     | VideoAnnotation.ui.MainWindow | MainWindow initialised
-2026-04-13 23:33:03 | INFO     | VideoAnnotation.ui.MainWindow | Application closing — releasing resources

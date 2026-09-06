@@ -1,0 +1,15 @@
+services:
+  web:
+    build:
+      context: .
+      target: web
+    image: tode-web:latest
+    container_name: tode-web
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./output/server_projects:/app/output/server_projects
+    environment:
+      - TODE_HOST=0.0.0.0
+      - TODE_PORT=8000
+    restart: unless-stopped
