@@ -32,8 +32,27 @@ powershell -ExecutionPolicy Bypass -File packaging\build_windows.ps1
 Trigger **Actions → Build installers → Run workflow**, or push a `v*` tag. Both
 artifacts are uploaded to the run.
 
+## Customized installer
+
+`tode_installer.iss` is a branded, modern-wizard setup:
+
+- **Branding** — `tode.ico` (setup icon, shortcuts, Add/Remove Programs) and
+  `wizard-large.bmp` / `wizard-small.bmp` (wizard artwork).
+- **License page** — shows `LICENSE` (MIT) during install.
+- **Publisher / URLs** — welldropp + GitHub links; full version metadata on the
+  `.exe`.
+- **Tasks** — optional desktop + quick-launch shortcuts.
+- **Registry** — records install dir + version under `HKCU\Software\welldropp\tode`.
+- **Clean uninstall** — removes the app's `logs/` on uninstall (leaves datasets).
+
+Regenerate the branding assets with `python packaging/make_assets.py`. To embed
+the icon in `tode.exe` itself, rebuild with PyInstaller (`tode.spec` references
+`packaging/tode.ico`).
+
 ## Files
 
 - `tode.spec` — PyInstaller build spec (bundles the app + all deps)
-- `tode_installer.iss` — Inno Setup script (the Windows setup wizard)
+- `tode_installer.iss` — Inno Setup script (branded Windows setup wizard)
+- `tode.ico`, `wizard-large.bmp`, `wizard-small.bmp` — installer branding
+- `make_assets.py` — regenerates the branding assets (Pillow)
 - `build_linux.sh` / `build_windows.ps1` — one-command local builds
